@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💗Learn PostgreSQL Practically</title>
+<!-- Add Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .scroll-container {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-width: 1500px;
+        max-height: 500px;
+        margin-top: 20px;
+        position: relative;
+        border: 1px solid #ccc;
+        padding: 10px;
+        background-color: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .scroll-container thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f2f2f2;
+        z-index: 2;
+    }
+
+    .scroll-container::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .scroll-container::-webkit-scrollbar-thumb {
+        background-color: #888;
+        border-radius: 4px;
+    }
+
+    .scroll-container::-webkit-scrollbar-thumb:hover {
+        background-color: #555;
+    }
+
+    .scroll-container::-webkit-scrollbar:horizontal {
+        position: absolute;
+        top: 0;
+    }
+
+    #dataDisplay {
+        min-width: 800px;
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+        word-wrap: break-word;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+</head>
+<body class="container mt-5">
+<h1 class="text-center mb-4">💗Learn PostgreSQL Practically</h1>
+<div class="card p-4 mb-4">
+    <h2>Simple Form</h2>
+    <form id="dataForm">
+        <div class="mb-3">
+            <label for="name" class="form-label">Name:</label>
+            <input type="text" id="name" name="name" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email:</label>
+            <input type="email" id="email" name="email" class="form-control" required>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="submitForm()">Submit</button>
+    </form>
+</div>
+<div class="card p-4">
+    <h2>Data Viewer</h2>
+    <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-success" onclick="fetchListings()">Show Listings</button>
+        <button class="btn btn-info" onclick="fetchReviews()">Show Reviews</button>
+        <button class="btn btn-warning" onclick="fetchUsers()">Show Users</button>
+    </div>
+    <div class="scroll-container">
+        <div id="dataDisplay" class="table-responsive">
+            <!-- Data will be displayed here -->
+        </div>
+    </div>
+</div>
+<div class="card p-4 mt-4">
+    <h2>Azure AI Reference</h2>
+    <ul>
+        <li><strong>OpenAI:</strong> <code>azure_ai.openai_generate_text(prompt, model, options)</code></li>
+        <li><strong>Cognitive Services:</strong> <code>azure_ai.cognitive_analyze_text(text, language, options)</code></li>
+        
+    </ul>
+</div>
+<!-- Add Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    async function submitForm() {
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+        const response = await fetch("http://localhost:3000/submit", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ name, email })
+        });
+        if (response.ok) {
+            alert("Data submitted successfully!");
+        } else {
+            alert("Failed to submit data.");
+        }
+    }
+
+    async function fetchListings() {
+        const response = await fetch("http://localhost:3000/listings");
+        if (response.ok) {
+            const data = await response.json();
+            displayData(data);
+            alert("Listings retrieved successfully!");
+        } else {
+            alert("Failed to retrieve listings.");
+        }
+    }
+
+    async function fetchSentimentAnalysis(id) {
+        const response = await fetch(`http://localhost:3000/sentiment/${id}`);
+        if (response.ok) {
+            const data = await response.json();
+            displaySentimentResult(data);
+        } else {
+            alert("Failed to retrieve sentiment analysis.");
+        }
+    }
+
+    function displaySentimentResult(data) {
+        const displayDiv = document.getElementById("dataDisplay");
+        displayDiv.innerHTML = ""; // Clear previous data
+
+        const table = document.createElement("table");
+        table.className = "table table-bordered table-striped";
+
+        const headerRow = document.createElement("tr");
+        ["ID", "Comments", "Sentiment", "Confidence"].forEach(key => {
+            const th = document.createElement("th");
+            th.textContent = key;
+            headerRow.appendChild(th);
+        });
+        table.appendChild(headerRow);
+
+        const tr = document.createElement("tr");
+        [data.id, data.comments, data.sentiment, data.confidence].forEach(value => {
+            const td = document.createElement("td");
+            td.textContent = value;
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
+
+        displayDiv.appendChild(table);
+    }
+
+    async function fetchReviews() {
+        const response = await fetch("http://localhost:3000/reviews");
+        if (response.ok) {
+            const data = await response.json();
+            displayData(data);
+            alert("Reviews retrieved successfully!");
+
+            // Add Sentiment Analysis button dynamically
+            const sentimentButton = document.createElement("button");
+            sentimentButton.className = "btn btn-secondary";
+            sentimentButton.textContent = "Sentiment Analysis";
+            sentimentButton.onclick = () => {
+                const id = prompt("Enter the ID for sentiment analysis:");
+                if (id) fetchSentimentAnalysis(id);
+            };
+            document.querySelector(".d-flex").appendChild(sentimentButton);
+        } else {
+            alert("Failed to retrieve reviews.");
+        }
+    }
+
+    async function fetchUsers() {
+        const response = await fetch("http://localhost:3000/users");
+        if (response.ok) {
+            const data = await response.json();
+            displayData(data);
+            alert("Users retrieved successfully with redacted emails!");
+        } else {
+            alert("Failed to retrieve users.");
+        }
+    }
+
+    function displayData(data) {
+        const displayDiv = document.getElementById("dataDisplay");
+        displayDiv.innerHTML = ""; // Clear previous data
+        if (data.length === 0) {
+            displayDiv.innerHTML = "<p class='text-center'>No data available.</p>";
+            return;
+        }
+        const table = document.createElement("table");
+        table.className = "table table-bordered table-striped";
+        const headerRow = document.createElement("tr");
+        Object.keys(data[0]).forEach(key => {
+            const th = document.createElement("th");
+            th.textContent = key;
+            headerRow.appendChild(th);
+        });
+        table.appendChild(headerRow);
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            Object.values(row).forEach(value => {
+                const td = document.createElement("td");
+                td.textContent = value;
+                tr.appendChild(td);
+            });
+            table.appendChild(tr);
+        });
+        displayDiv.appendChild(table);
+    }
+</script>
+</body>
+</html>
